@@ -48,7 +48,7 @@
   "labelText": "",
   "labelTextSize": "0.875rem",
   "labelWidth": "5",
-  "leftColumn": 35,
+  "leftColumn": 30,
   "maxDynamicHeight": 9000,
   "minDynamicHeight": 4,
   "onOptionChange": "{{utils.filteredData()}}",
@@ -59,7 +59,7 @@
   "parentRowSpace": 10,
   "placeholderText": "Select status",
   "renderMode": "CANVAS",
-  "rightColumn": 44,
+  "rightColumn": 39,
   "searchTags": [
     "dropdown"
   ],
