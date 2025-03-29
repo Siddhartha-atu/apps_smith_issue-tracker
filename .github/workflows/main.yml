@@ -1,0 +1,72 @@
+name: CI/CD for Appsmith on EC2
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Run Lint Checks
+        run: |
+          echo "Running lint checks..."
+          # Add commands like npm run lint if needed
+
+      - name: Run Tests
+        run: |
+          echo "Running tests..."
+          # Add testing framework commands if needed
+
+  deploy:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH Key
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY }}" > lowcode.pem
+          chmod 600 lowcode.pem
+
+      - name: Deploy to EC2
+        run: |
+          ssh -o StrictHostKeyChecking=no -i lowcode.pem ec2-user@ec2-54-194-42-182.eu-west-1.compute.amazonaws.com << 'EOF'
+            echo "Updating EC2 instance..."
+            sudo apt update && sudo apt upgrade -y
+            
+            echo "Installing Docker & Git..."
+            sudo apt install -y docker.io docker-compose git
+            sudo systemctl enable --now docker
+            sudo usermod -aG docker $USER
+            
+            echo "Setting up Appsmith directory..."
+            if [ ! -d "/home/ec2-user/appsmith" ]; then
+              git clone https://github.com/YOUR_GITHUB_USERNAME/YOUR_REPO.git /home/ec2-user/appsmith
+            fi
+            
+            cd /home/ec2-user/appsmith
+            git pull origin main
+
+            echo "Creating Docker Compose file..."
+            cat <<EOL > docker-compose.yml
+            version: '3.7'
+            services:
+              appsmith:
+                image: index.docker.io/appsmith/appsmith-ce
+                container_name: appsmith
+                ports:
+                  - "80:80"
+                restart: always
+            EOL
+
+            echo "Deploying Appsmith..."
+            docker-compose down
+            docker-compose up -d
+          EOF
